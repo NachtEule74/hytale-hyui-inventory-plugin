@@ -41,7 +41,7 @@ Edit `src/main/resources/config.json`:
 
 1. Clone repository
 2. Open in IntelliJ IDEA
-3. Set Java 25 as SDK
+3. Set Java 21 as SDK
 4. Gradle will auto-detect Hytale installation
 5. Run `HytaleServer` configuration
 
