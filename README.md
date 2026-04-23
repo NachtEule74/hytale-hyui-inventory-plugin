@@ -1,6 +1,6 @@
 # Hytale Advanced Inventory Plugin 🎮
 
-A Java 25 HyUI-based plugin for Hytale that provides a sophisticated 2-page inventory system with RPG level-based unlocking.
+A Java 21 HyUI-based plugin for Hytale that provides a sophisticated 2-page inventory system with RPG level-based unlocking.
 
 ## Features ✨
 
@@ -16,7 +16,7 @@ A Java 25 HyUI-based plugin for Hytale that provides a sophisticated 2-page inve
 
 - Hytale installed via official launcher
 - IntelliJ IDEA (Community edition OK)
-- Java 25 SDK
+- Java 21 SDK
 - Gradle
 
 ## Configuration
