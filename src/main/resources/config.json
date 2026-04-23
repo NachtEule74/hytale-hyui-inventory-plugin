@@ -1,0 +1,11 @@
+{
+  "unlockLevel": 20,
+  "itemsPerPage": 20,
+  "storage": {
+    "autoSaveInterval": 30000
+  },
+  "threading": {
+    "threadPoolSize": 4,
+    "enableAsyncEvents": true
+  }
+}

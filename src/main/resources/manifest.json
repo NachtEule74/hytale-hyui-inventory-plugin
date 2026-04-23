@@ -1,0 +1,18 @@
+{
+    "Group": "NachtEule74",
+    "Name": "HytaleInventoryPlugin",
+    "Version": "1.0.0",
+    "Description": "Advanced 2-page inventory system with level-based unlocking",
+    "Authors": [
+        {
+            "Name": "NachtEule74"
+        }
+    ],
+    "Website": "https://github.com/NachtEule74",
+    "ServerVersion": "*",
+    "Dependencies": {},
+    "OptionalDependencies": {},
+    "DisabledByDefault": false,
+    "Main": "com.nachteuele74.hytale.inventory.HytaleInventoryPlugin",
+    "IncludesAssetPack": true
+}
