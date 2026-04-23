@@ -123,7 +123,7 @@ public class InventoryCommand extends AbstractAsyncCommand {
                             <button id="page1Btn" style="flex: 1; background-color: #4CAF50; padding: 10px; border-radius: 5px;">
                                 <b>Page 1</b>
                             </button>
-                            <button id="page2Btn" style="flex: 1; background-color: #2196F3; padding: 10px; border-radius: 5px;""" + page2Disabled + """>
+                            <button id="page2Btn" style="flex: 1; background-color: #2196F3; padding: 10px; border-radius: 5px;""" + page2Disabled + """
                                 <b>Page 2</b> """ + page2Badge + """
                             </button>
                         </div>
