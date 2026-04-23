@@ -27,7 +27,7 @@ public class HytaleInventoryPlugin extends JavaPlugin {
     }
 
     @Override
-    protected void start() {
+    protected void setup() {
         LOGGER.atInfo().log("Starting plugin setup...");
         try {
             // Initialize configuration
@@ -56,15 +56,6 @@ public class HytaleInventoryPlugin extends JavaPlugin {
             LOGGER.atError().withThrowable(e).log("Failed to initialize plugin!");
             throw new RuntimeException("Plugin initialization failed", e);
         }
-    }
-
-    @Override
-    protected void stop() {
-        LOGGER.atInfo().log("Shutting down " + this.getName() + "...");
-        if (dataManager != null) {
-            dataManager.shutdown();
-        }
-        LOGGER.atInfo().log("✓ Plugin stopped");
     }
 
     public ConfigManager getConfigManager() {
