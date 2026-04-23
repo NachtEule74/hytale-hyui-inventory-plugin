@@ -121,7 +121,7 @@ public class PlayerInventoryDataManager {
                 return GSON.fromJson(reader, PlayerInventoryData.class);
             }
         } catch (IOException e) {
-            LOGGER.atError().withThrowable(e).log("Error loading player data");
+            LOGGER.atSevere().withCause(e).log("Error loading player data");
             return null;
         }
     }
@@ -133,14 +133,14 @@ public class PlayerInventoryDataManager {
                 GSON.toJson(data, writer);
             }
         } catch (IOException e) {
-            LOGGER.atError().withThrowable(e).log("Error saving player data");
+            LOGGER.atSevere().withCause(e).log("Error saving player data");
         }
     }
 
     private void ensureDataDirectory() {
         File dir = new File(DATA_DIR);
         if (!dir.exists() && !dir.mkdirs()) {
-            LOGGER.atError().log("Failed to create data directory");
+            LOGGER.atSevere().log("Failed to create data directory");
         }
     }
 

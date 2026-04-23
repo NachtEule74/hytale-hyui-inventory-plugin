@@ -41,7 +41,7 @@ public class PlayerEventListener {
                     LOGGER.atInfo().log("Player " + playerUUID + " joined. Level: " + data.getPlayerLevel());
                 })
                 .exceptionally(e -> {
-                    LOGGER.atError().withThrowable(e).log("Error handling player join");
+                    LOGGER.atSevere().withCause(e).log("Error handling player join");
                     return null;
                 });
     }
@@ -63,7 +63,7 @@ public class PlayerEventListener {
                     }
                 })
                 .exceptionally(e -> {
-                    LOGGER.atError().withThrowable(e).log("Error handling level up");
+                    LOGGER.atSevere().withCause(e).log("Error handling level up");
                     return null;
                 });
     }
@@ -78,7 +78,7 @@ public class PlayerEventListener {
                     LOGGER.atInfo().log("Player " + playerUUID + " disconnected. Data saved.");
                 })
                 .exceptionally(e -> {
-                    LOGGER.atError().withThrowable(e).log("Error saving player data on disconnect");
+                    LOGGER.atSevere().withCause(e).log("Error saving player data on disconnect");
                     return null;
                 });
     }

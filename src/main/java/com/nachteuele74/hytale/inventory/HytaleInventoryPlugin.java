@@ -53,7 +53,7 @@ public class HytaleInventoryPlugin extends JavaPlugin {
             
             LOGGER.atInfo().log("✓ Plugin successfully loaded!");
         } catch (Exception e) {
-            LOGGER.atError().withThrowable(e).log("Failed to initialize plugin!");
+            LOGGER.atSevere().withCause(e).log("Failed to initialize plugin!");
             throw new RuntimeException("Plugin initialization failed", e);
         }
     }

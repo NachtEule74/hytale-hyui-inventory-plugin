@@ -60,7 +60,7 @@ public class InventoryCommand extends AbstractAsyncCommand {
         Store<EntityStore> store = ref.getStore();
         World world = store.getExternalData().getWorld();
         PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-        String playerUUID = player.getGameProfile().getId().toString();
+        String playerUUID = playerRef.getUuid().toString();
 
         return CompletableFuture.runAsync(() -> {
             if (playerRef == null) return;
@@ -116,37 +116,42 @@ public class InventoryCommand extends AbstractAsyncCommand {
         String page2Badge = page2Unlocked ? "" : "🔒";
         String page2Disabled = page2Unlocked ? "" : " style=\"opacity: 0.5;\"";
 
+        String page2Status = page2Unlocked
+                ? "<p style=\"color: green;\"><b>✓ Page 2 Unlocked</b></p>"
+                : "<p style=\"color: red;\"><b>✗ Unlock at Level " + unlockLevel + "</b></p>";
+
+        String pageContent = playerData.getCurrentPage() == 1
+                ? "<div style=\"background-color: #e8f5e9; padding: 10px; border-radius: 5px;\">"
+                + "<p><b>Page 1 Items</b></p><p>Slot 1-20 available</p></div>"
+                : "<div style=\"background-color: #e3f2fd; padding: 10px; border-radius: 5px;\">"
+                + "<p><b>Page 2 Items</b></p>"
+                + (page2Unlocked ? "<p>Slot 21-40 available</p>" : "<p>🔒 Locked until Level " + unlockLevel + "</p>")
+                + "</div>";
+
         return """
-                <div class="page-overlay">
-                    <div class="container" data-hyui-title="Advanced Inventory">
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                            <button id="page1Btn" style="flex: 1; background-color: #4CAF50; padding: 10px; border-radius: 5px;">
-                                <b>Page 1</b>
-                            </button>
-                            <button id="page2Btn" style="flex: 1; background-color: #2196F3; padding: 10px; border-radius: 5px;""" + page2Disabled + """
-                                <b>Page 2</b> """ + page2Badge + """
-                            </button>
-                        </div>
-                        
-                        <div style="padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin-bottom: 10px;">
-                            <p><b>Player Level:</b> """ + playerData.getPlayerLevel() + """</p>
-                            """ + (page2Unlocked ? "<p style=\"color: green;\"><b>✓ Page 2 Unlocked</b></p>" 
-                                    : "<p style=\"color: red;\"><b>✗ Unlock at Level " + unlockLevel + "</b></p>") + """
-                        </div>
-                        
-                        """ + (playerData.getCurrentPage() == 1 ? 
-                            "<div style=\"background-color: #e8f5e9; padding: 10px; border-radius: 5px;\">"
-                            + "<p><b>Page 1 Items</b></p>"
-                            + "<p>Slot 1-20 available</p>"
-                            + "</div>"
-                        : 
-                            "<div style=\"background-color: #e3f2fd; padding: 10px; border-radius: 5px;\">"
-                            + "<p><b>Page 2 Items</b></p>"
-                            + (page2Unlocked ? "<p>Slot 21-40 available</p>" : "<p>🔒 Locked until Level " + unlockLevel + "</p>")
-                            + "</div>"
-                        ) + """
+            <div class="page-overlay">
+                <div class="container" data-hyui-title="Advanced Inventory">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button id="page1Btn" style="flex: 1; background-color: #4CAF50; padding: 10px; border-radius: 5px;">
+                            <b>Page 1</b>
+                        </button>
+                        <button id="page2Btn" style="flex: 1; background-color: #2196F3; padding: 10px; border-radius: 5px;"""
+                + page2Disabled + ">"
+                + "<b>Page 2</b> " + page2Badge
+                + """
+                        </button>
                     </div>
+                    <div style="padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin-bottom: 10px;">
+                        <p><b>Player Level:</b> """
+                + playerData.getPlayerLevel()
+                + "</p>" + page2Status
+                + """
+                    </div>
+                    """
+                + pageContent
+                + """
                 </div>
-                """;
+            </div>
+            """;
     }
 }

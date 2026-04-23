@@ -10,8 +10,12 @@
     ],
     "Website": "https://github.com/NachtEule74",
     "ServerVersion": "*",
-    "Dependencies": {},
-    "OptionalDependencies": {},
+    "Dependencies": {
+        
+    },
+    "OptionalDependencies": {
+        
+    },
     "DisabledByDefault": false,
     "Main": "com.nachteuele74.hytale.inventory.HytaleInventoryPlugin",
     "IncludesAssetPack": true

@@ -41,7 +41,7 @@ public class ConfigManager {
                 }
                 LOGGER.atInfo().log("Config loaded from: " + CONFIG_PATH);
             } catch (IOException e) {
-                LOGGER.atError().withThrowable(e).log("Error reading config file");
+                LOGGER.atSevere().withCause(e).log("Error reading config file");
                 config = new PluginConfig();
             }
         } finally {
@@ -57,7 +57,7 @@ public class ConfigManager {
         try {
             File configDir = new File(CONFIG_PATH).getParentFile();
             if (!configDir.exists() && !configDir.mkdirs()) {
-                LOGGER.atError().log("Failed to create config directory");
+                LOGGER.atSevere().log("Failed to create config directory");
                 return;
             }
 
@@ -65,7 +65,7 @@ public class ConfigManager {
                 GSON.toJson(config, writer);
                 LOGGER.atInfo().log("Config saved to: " + CONFIG_PATH);
             } catch (IOException e) {
-                LOGGER.atError().withThrowable(e).log("Error writing config file");
+                LOGGER.atSevere().withCause(e).log("Error writing config file");
             }
         } finally {
             lock.readLock().unlock();
@@ -79,7 +79,7 @@ public class ConfigManager {
         config = new PluginConfig();
         File configDir = new File(CONFIG_PATH).getParentFile();
         if (!configDir.exists() && !configDir.mkdirs()) {
-            LOGGER.atError().log("Failed to create config directory");
+            LOGGER.atSevere().log("Failed to create config directory");
             return;
         }
         saveConfig();
