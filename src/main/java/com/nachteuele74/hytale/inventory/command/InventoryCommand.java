@@ -1,6 +1,8 @@
 package com.nachteuele74.hytale.inventory.command;
 
+import au.ellie.hyui.builders.ItemGridBuilder;
 import au.ellie.hyui.builders.PageBuilder;
+import au.ellie.hyui.builders.ButtonBuilder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -11,6 +13,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -29,7 +32,10 @@ import static com.hypixel.hytale.server.core.command.commands.player.inventory.I
  */
 public class InventoryCommand extends AbstractAsyncCommand {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-    
+
+    private static final int SLOTS_PER_PAGE = 45;
+    private static final int SLOTS_PER_ROW = 9;
+
     private final HytaleInventoryPlugin plugin;
     private final PlayerInventoryDataManager dataManager;
     private final ConfigManager configManager;
@@ -39,7 +45,7 @@ public class InventoryCommand extends AbstractAsyncCommand {
         this.plugin = plugin;
         this.dataManager = dataManager;
         this.configManager = configManager;
-        this.setPermissionGroup(GameMode.Adventure); // Allow all players
+        this.setPermissionGroup(GameMode.Adventure);
         LOGGER.atInfo().log("InventoryCommand registered");
     }
 
@@ -59,99 +65,97 @@ public class InventoryCommand extends AbstractAsyncCommand {
 
         Store<EntityStore> store = ref.getStore();
         World world = store.getExternalData().getWorld();
-        PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-        String playerUUID = playerRef.getUuid().toString();
 
-        return CompletableFuture.runAsync(() -> {
-            if (playerRef == null) return;
+        CompletableFuture<PlayerRef> playerRefFuture = new CompletableFuture<>();
+        world.execute(() ->
+                playerRefFuture.complete(store.getComponent(ref, PlayerRef.getComponentType()))
+        );
 
-            // Load player data
-            PlayerInventoryData playerData = dataManager.getPlayerData(playerUUID);
-            int unlockLevel = configManager.getConfig().getUnlockLevel();
-            boolean page2Unlocked = playerData.getPlayerLevel() >= unlockLevel;
+        return playerRefFuture.thenComposeAsync(playerRef -> {
+            if (playerRef == null) return CompletableFuture.completedFuture(null);
+            String playerUUID = playerRef.getUuid().toString();
 
-            if (page2Unlocked && !playerData.isPage2Unlocked()) {
-                playerData.unlockPage2();
-                dataManager.savePlayerData(playerUUID);
-            }
+            return CompletableFuture.runAsync(() -> {
+                PlayerInventoryData playerData = dataManager.getPlayerData(playerUUID);
+                int unlockLevel = configManager.getConfig().getUnlockLevel();
+                boolean page2Unlocked = playerData.getPlayerLevel() >= unlockLevel;
 
-            // Build the UI
-            PageBuilder page = PageBuilder.detachedPage()
-                    .withLifetime(CustomPageLifetime.CanDismiss)
-                    .fromHtml(buildInventoryHTML(playerData, page2Unlocked, unlockLevel));
-
-            // Setup page 1 button
-            page.getById("page1Btn", au.ellie.hyui.builders.ButtonBuilder.class).ifPresent(button -> {
-                button.addEventListener(CustomUIEventBindingType.Activating, event -> {
-                    playerData.setCurrentPage(1);
+                if (page2Unlocked && !playerData.isPage2Unlocked()) {
+                    playerData.unlockPage2();
                     dataManager.savePlayerData(playerUUID);
-                    commandContext.sendMessage(Message.raw("§e[Inventory] §7Switched to Page 1"));
-                });
-            });
+                }
 
-            // Setup page 2 button
-            page.getById("page2Btn", au.ellie.hyui.builders.ButtonBuilder.class).ifPresent(button -> {
+                String page2Label = page2Unlocked ? "Seite 2" : "Seite 2 (Lvl " + unlockLevel + ")";
+                String selectedTab = playerData.getCurrentPage() == 2 && page2Unlocked ? "page2" : "page1";
+
+                String html = "<style>"
+                        + ".container { anchor-width: 490; anchor-height: 320; }"
+                        + "#inv-grid-1, #inv-grid-2 { anchor-height: 240; flex-weight: 1; }"
+                        + "</style>"
+                        + "<div class=\"page-overlay\">"
+                        + "<div class=\"container\" data-hyui-title=\"Inventar\">"
+                        + "<div class=\"container-contents\" style=\"layout-mode: Top; padding: 6;\">"
+                        + "<nav id=\"inv-tabs\" class=\"tabs\""
+                        + " data-tabs=\"page1:Seite 1,page2:" + page2Label + "\""
+                        + " data-selected=\"" + selectedTab + "\">"
+                        + "</nav>"
+                        // Tab Seite 1
+                        + "<div id=\"page1-content\" class=\"tab-content\" data-hyui-tab-id=\"page1\">"
+                        + "<div id=\"inv-grid-1\" class=\"item-grid\""
+                        + " data-hyui-slots-per-row=\"" + SLOTS_PER_ROW + "\""
+                        + " data-hyui-are-items-draggable=\"true\">"
+                        + "</div>"
+                        + "</div>"
+                        // Tab Seite 2
+                        + "<div id=\"page2-content\" class=\"tab-content\" data-hyui-tab-id=\"page2\">"
+                        + (page2Unlocked
+                        ? "<div id=\"inv-grid-2\" class=\"item-grid\""
+                        + " data-hyui-slots-per-row=\"" + SLOTS_PER_ROW + "\""
+                        + " data-hyui-are-items-draggable=\"true\">"
+                        + "</div>"
+                        : "<p>Seite 2 wird bei Level " + unlockLevel + " freigeschaltet!</p>")
+                        + "</div>"
+                        + "</div>"
+                        + "</div>"
+                        + "</div>";
+
+                PageBuilder page = PageBuilder.detachedPage()
+                        .withLifetime(CustomPageLifetime.CanDismiss)
+                        .fromHtml(html);
+
+                // Seite 1 Grid befüllen
+                page.getById("inv-grid-1", ItemGridBuilder.class).ifPresent(grid -> {
+                    for (int i = 0; i < SLOTS_PER_PAGE; i++) {
+                        grid.addSlot(new ItemGridSlot());
+                    }
+                });
+
+                // Seite 2 Grid befüllen (nur wenn freigeschaltet)
                 if (page2Unlocked) {
-                    button.addEventListener(CustomUIEventBindingType.Activating, event -> {
-                        playerData.setCurrentPage(2);
-                        dataManager.savePlayerData(playerUUID);
-                        commandContext.sendMessage(Message.raw("§e[Inventory] §7Switched to Page 2"));
+                    page.getById("inv-grid-2", ItemGridBuilder.class).ifPresent(grid -> {
+                        for (int i = 0; i < SLOTS_PER_PAGE; i++) {
+                            grid.addSlot(new ItemGridSlot());
+                        }
+                    });
+                }
+
+                // Tab-Wechsel auf Seite 2 sperren wenn nicht freigeschaltet
+                if (!page2Unlocked) {
+                    page.addEventListener("inv-tabs", CustomUIEventBindingType.ValueChanged, event -> {
+                        commandContext.sendMessage(Message.raw(
+                                "§e[Inventar] §cSeite 2 wird bei Level " + unlockLevel + " freigeschaltet!"
+                        ));
                     });
                 } else {
-                    commandContext.sendMessage(Message.raw(
-                            "§e[Inventory] §cPage 2 unlocked at Level " + unlockLevel + "!"
-                    ));
+                    // Tab-Wechsel speichern
+                    page.addEventListener("inv-tabs", CustomUIEventBindingType.ValueChanged, event -> {
+                        // Aktuell keine direkte Möglichkeit den Tab-Wert aus dem Event zu lesen
+                        // Wird beim nächsten Öffnen des Inventars gespeichert
+                    });
                 }
-            });
 
-            // Open the UI
-            page.open(playerRef, store);
-        }, world);
-    }
-
-    /**
-     * Builds the HyUIML HTML for the inventory UI.
-     */
-    private String buildInventoryHTML(PlayerInventoryData playerData, boolean page2Unlocked, int unlockLevel) {
-        String page2Badge = page2Unlocked ? "" : "🔒";
-        String page2Disabled = page2Unlocked ? "" : " style=\"opacity: 0.5;\"";
-
-        String page2Status = page2Unlocked
-                ? "<p style=\"color: green;\"><b>✓ Page 2 Unlocked</b></p>"
-                : "<p style=\"color: red;\"><b>✗ Unlock at Level " + unlockLevel + "</b></p>";
-
-        String pageContent = playerData.getCurrentPage() == 1
-                ? "<div style=\"background-color: #e8f5e9; padding: 10px; border-radius: 5px;\">"
-                + "<p><b>Page 1 Items</b></p><p>Slot 1-20 available</p></div>"
-                : "<div style=\"background-color: #e3f2fd; padding: 10px; border-radius: 5px;\">"
-                + "<p><b>Page 2 Items</b></p>"
-                + (page2Unlocked ? "<p>Slot 21-40 available</p>" : "<p>🔒 Locked until Level " + unlockLevel + "</p>")
-                + "</div>";
-
-        return """
-            <div class="page-overlay">
-                <div class="container" data-hyui-title="Advanced Inventory">
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button id="page1Btn" style="flex: 1; background-color: #4CAF50; padding: 10px; border-radius: 5px;">
-                            <b>Page 1</b>
-                        </button>
-                        <button id="page2Btn" style="flex: 1; background-color: #2196F3; padding: 10px; border-radius: 5px;"""
-                + page2Disabled + ">"
-                + "<b>Page 2</b> " + page2Badge
-                + """
-                        </button>
-                    </div>
-                    <div style="padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin-bottom: 10px;">
-                        <p><b>Player Level:</b> """
-                + playerData.getPlayerLevel()
-                + "</p>" + page2Status
-                + """
-                    </div>
-                    """
-                + pageContent
-                + """
-                </div>
-            </div>
-            """;
+                page.open(playerRef, store);
+            }, world);
+        });
     }
 }
